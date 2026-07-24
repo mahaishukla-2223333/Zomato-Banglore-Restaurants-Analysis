@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zomato Bangalore — Business Intelligence Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#050810;
+  --bg2:#0a1120;
+  --bg3:#0d1626;
+  --blue:#5ec8f8;
+  --blue-soft:#8fd9ff;
+  --blue-deep:#1a3554;
+  --yellow:#f6c343;
+  --yellow-deep:#c99a2b;
+  --text:#eaf2fb;
+  --muted:#8ba0b8;
+  --muted-dim:#5b6b7f;
+  --glass:rgba(255,255,255,0.035);
+  --glass-border:rgba(94,200,248,0.16);
+  --radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  overflow-x:hidden;
+  position:relative;
+  min-height:100vh;
+}
+::selection{background:var(--yellow);color:#05080f;}
+
+/* ===== Background blobs ===== */
+.bg-blobs{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:0.35;}
+.blob1{width:520px;height:520px;background:radial-gradient(circle,var(--blue) 0%,transparent 70%);top:-150px;left:-100px;animation:drift1 22s ease-in-out infinite;}
+.blob2{width:460px;height:460px;background:radial-gradient(circle,var(--yellow) 0%,transparent 70%);top:20%;right:-150px;opacity:0.18;animation:drift2 26s ease-in-out infinite;}
+.blob3{width:600px;height:600px;background:radial-gradient(circle,var(--blue-deep) 0%,transparent 70%);bottom:0;left:20%;opacity:0.5;animation:drift3 30s ease-in-out infinite;}
+.blob4{width:380px;height:380px;background:radial-gradient(circle,var(--yellow) 0%,transparent 70%);bottom:10%;right:10%;opacity:0.12;animation:drift1 24s ease-in-out infinite reverse;}
+@keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,40px);}}
+@keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,60px);}}
+@keyframes drift3{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,-50px);}}
+
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===== Scroll progress ===== */
+.progress-bar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--yellow));z-index:999;width:0%;transition:width 0.1s ease-out;box-shadow:0 0 12px var(--blue);}
+
+/* ===== Navbar ===== */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 40px;
+  background:rgba(6,10,18,0.65);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(94,200,248,0.1);
+}
+.nav-brand{display:flex;align-items:center;gap:12px;}
+.nav-logo{
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--blue),var(--blue-deep));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px;color:#04101c;
+  box-shadow:0 0 18px rgba(94,200,248,0.35);
+}
+.nav-brand-text{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;letter-spacing:0.3px;}
+.nav-brand-text span{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:1px;margin-top:2px;}
+.nav-links{
+  display:flex;gap:8px;list-style:none;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;
+  max-width:64vw;
+}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-links li{flex:0 0 auto;}
+.nav-links a{
+  color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;
+  padding:9px 15px;border-radius:9px;position:relative;transition:all 0.25s ease;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+  border:1px solid rgba(94,200,248,0.14);background:rgba(255,255,255,0.02);
+  display:inline-block;
+}
+.nav-links a:hover{color:var(--blue-soft);background:rgba(94,200,248,0.1);border-color:rgba(94,200,248,0.4);transform:translateY(-1px);}
+.nav-links a.active{color:#04101c;background:linear-gradient(135deg,var(--blue),var(--blue-soft));border-color:var(--blue);font-weight:600;box-shadow:0 4px 14px rgba(94,200,248,0.3);}
+.nav-cta{display:flex;gap:10px;}
+.icon-btn{
+  width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.04);border:1px solid rgba(94,200,248,0.15);
+  color:var(--muted);transition:all 0.25s ease;text-decoration:none;
+}
+.icon-btn:hover{color:var(--blue-soft);border-color:var(--blue);transform:translateY(-2px);box-shadow:0 4px 14px rgba(94,200,248,0.2);}
+
+@media(max-width:900px){
+  nav{flex-wrap:wrap;padding:14px 20px 10px;row-gap:10px;}
+  .nav-links{order:3;width:100%;max-width:100%;padding-bottom:2px;}
+  .nav-links a{font-size:12.5px;padding:9px 14px;}
+}
+@media(max-width:520px){
+  .nav-brand-text span{display:none;}
+}
+
+/* ===== Hero header ===== */
+.page-head{
+  position:relative;z-index:1;
+  padding:150px 40px 60px;
+  text-align:left;max-width:1200px;margin:0 auto;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;
+  color:var(--yellow);text-transform:uppercase;margin-bottom:18px;
+  border:1px solid rgba(246,195,67,0.3);padding:6px 14px;border-radius:100px;
+  background:rgba(246,195,67,0.06);
+}
+.page-head h1{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;
+  font-size:clamp(34px,5vw,58px);line-height:1.08;
+  background:linear-gradient(135deg,#ffffff 20%,var(--blue-soft) 70%,var(--yellow) 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  margin-bottom:18px;
+}
+.page-head p{color:var(--muted);font-size:16.5px;max-width:640px;line-height:1.6;}
+.route-line{margin-top:36px;display:flex;align-items:center;gap:14px;}
+.route-line .dash{flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--blue) 0 8px,transparent 8px 16px);opacity:0.5;}
+.scooter{font-size:20px;animation:bounce 2s ease-in-out infinite;}
+@keyframes bounce{0%,100%{transform:translateX(0);}50%{transform:translateX(10px);}}
+
+/* ===== Section container ===== */
+.section{
+  position:relative;z-index:1;
+  max-width:1300px;margin:0 auto;
+  padding:70px 40px 40px;
+  opacity:0;transform:translateY(30px);
+  transition:opacity 0.8s ease, transform 0.8s ease;
+}
+.section.visible{opacity:1;transform:translateY(0);}
+
+.section-header{margin-bottom:36px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+.section-header .tag{
+  display:flex;align-items:center;gap:10px;margin-bottom:10px;
+}
+.section-header .tag .bar{width:4px;height:22px;background:linear-gradient(180deg,var(--blue),var(--yellow));border-radius:4px;}
+.section-header .tag span{font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--blue-soft);text-transform:uppercase;}
+.section-header h2{font-family:'Space Grotesk',sans-serif;font-size:clamp(24px,3vw,32px);font-weight:600;color:#fff;}
+.section-header p{color:var(--muted);font-size:14.5px;margin-top:6px;max-width:560px;}
+.filters{display:flex;gap:10px;flex-wrap:wrap;}
+.filter-select{
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--blue-soft);
+  border:1px solid rgba(94,200,248,0.22);padding:8px 30px 8px 14px;border-radius:9px;
+  background:rgba(255,255,255,0.03);white-space:nowrap;cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235ec8f8' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+  transition:all 0.25s ease;
+}
+.filter-select:hover{border-color:rgba(94,200,248,0.5);color:#fff;}
+.filter-select:focus{outline:none;border-color:var(--yellow);box-shadow:0 0 0 3px rgba(246,195,67,0.12);}
+.filter-select option{background:#0a1120;color:var(--text);}
+.filter-select.active{border-color:var(--yellow);color:var(--yellow);}
+
+/* ===== KPI cards ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:32px;}
+.kpi-card{
+  background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);
+  padding:20px;backdrop-filter:blur(14px);
+  transition:transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  position:relative;overflow:hidden;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--blue),var(--yellow));
+  opacity:0;transition:opacity 0.3s ease;
+}
+.kpi-card:hover{transform:translateY(-5px);box-shadow:0 12px 30px rgba(94,200,248,0.12);border-color:rgba(94,200,248,0.35);}
+.kpi-card:hover::before{opacity:1;}
+.kpi-value{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:700;color:#fff;letter-spacing:-0.5px;}
+.kpi-value.yellow{color:var(--yellow);}
+.kpi-value.blue{color:var(--blue-soft);}
+.kpi-label{font-size:12.5px;color:var(--muted);margin-top:6px;font-weight:500;}
+
+/* ===== Chart grid ===== */
+.chart-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+.chart-grid.thirds{grid-template-columns:repeat(3,1fr);}
+.chart-card{
+  background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);
+  padding:22px;backdrop-filter:blur(14px);
+  transition:transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.chart-card:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,0.35),0 0 0 1px rgba(94,200,248,0.15);border-color:rgba(94,200,248,0.3);}
+.chart-card.span2{grid-column:span 2;}
+.chart-title{font-family:'Space Grotesk',sans-serif;font-size:15.5px;font-weight:600;color:#fff;}
+.chart-sub{font-size:12px;color:var(--muted-dim);margin-top:3px;margin-bottom:16px;}
+.chart-canvas-wrap{position:relative;width:100%;}
+.chart-canvas-wrap canvas{position:absolute;top:0;left:0;width:100% !important;height:100% !important;}
+.stat-strip{display:flex;gap:24px;margin-top:14px;flex-wrap:wrap;}
+.stat-pill{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);}
+.stat-pill b{color:var(--yellow);}
+
+@media(max-width:900px){
+  .chart-grid,.chart-grid.thirds{grid-template-columns:1fr;}
+  .chart-card.span2{grid-column:span 1;}
+  .section{padding:50px 20px 20px;}
+  .page-head{padding:130px 20px 40px;}
+}
+
+/* ===== Market segment cards (page 5) ===== */
+.segment-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:28px;}
+.segment-card{
+  border-radius:var(--radius);padding:24px;position:relative;overflow:hidden;
+  border:1px solid var(--glass-border);backdrop-filter:blur(14px);
+}
+.segment-card.luxury{background:linear-gradient(160deg,rgba(94,200,248,0.14),rgba(255,255,255,0.02));}
+.segment-card.mid{background:linear-gradient(160deg,rgba(246,195,67,0.12),rgba(255,255,255,0.02));}
+.segment-card.budget{background:linear-gradient(160deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01));}
+.segment-name{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;margin-bottom:10px;}
+.segment-card.luxury .segment-name{color:var(--blue-soft);}
+.segment-card.mid .segment-name{color:var(--yellow);}
+.segment-card.budget .segment-name{color:var(--text);}
+.segment-meta{font-size:13px;color:var(--muted);line-height:1.8;font-family:'JetBrains Mono',monospace;}
+@media(max-width:900px){.segment-cards{grid-template-columns:1fr;}}
+
+/* ===== Divider (delivery route) ===== */
+.divider-wrap{position:relative;z-index:1;max-width:1300px;margin:20px auto;padding:0 40px;}
+.divider{
+  position:relative;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(94,200,248,0.4) 20%,rgba(246,195,67,0.4) 80%,transparent);
+}
+.divider .rider{
+  position:absolute;top:-11px;font-size:20px;
+  animation:ride 8s linear infinite;
+}
+@keyframes ride{0%{left:-3%;}100%{left:100%;}}
+@media(max-width:900px){.divider-wrap{padding:0 20px;}}
+
+/* ===== Footer ===== */
+footer{
+  position:relative;z-index:1;margin-top:60px;
+  border-top:1px solid rgba(94,200,248,0.12);
+  padding:50px 40px 30px;
+  background:linear-gradient(180deg,transparent,rgba(94,200,248,0.03));
+}
+.footer-inner{max-width:1300px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:30px;}
+.footer-brand{display:flex;align-items:center;gap:12px;}
+.footer-brand-text{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:16px;}
+.footer-brand-text span{display:block;font-size:12px;color:var(--muted);font-weight:400;margin-top:3px;font-family:'JetBrains Mono',monospace;}
+.footer-links{display:flex;gap:36px;flex-wrap:wrap;}
+.footer-col h4{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1.5px;color:var(--muted-dim);text-transform:uppercase;margin-bottom:12px;}
+.footer-col a{display:block;color:var(--muted);text-decoration:none;font-size:13.5px;margin-bottom:9px;transition:color 0.2s ease;}
+.footer-col a:hover{color:var(--blue-soft);}
+.footer-social{display:flex;gap:10px;}
+.footer-bottom{
+  max-width:1300px;margin:40px auto 0;padding-top:20px;
+  border-top:1px solid rgba(255,255,255,0.06);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+  font-size:12.5px;color:var(--muted-dim);font-family:'JetBrains Mono',monospace;
+}
+@media(max-width:700px){.footer-inner{flex-direction:column;}}
+
+/* fade-in for cards */
+.fade-item{opacity:0;transform:translateY(16px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.fade-item.show{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="bg-blobs">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+  <div class="blob blob4"></div>
+</div>
+<div class="noise"></div>
+<div class="progress-bar" id="progressBar"></div>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">MS</div>
+    <div class="nav-brand-text">Mahi Shukla<span>ZOMATO BANGALORE · BI DASHBOARD</span></div>
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#overview" class="active">Executive Overview</a></li>
+    <li><a href="#location">Location Analysis</a></li>
+    <li><a href="#cuisine">Cuisine Analysis</a></li>
+    <li><a href="#price">Price &amp; Rating</a></li>
+    <li><a href="#market">Market Strategy</a></li>
+  </ul>
+  <div class="nav-cta">
+    <a href="https://github.com/MahiShukla-ms/profile" target="_blank" class="icon-btn" aria-label="GitHub">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55 0-.27-.01-1.17-.01-2.12-3.2.7-3.88-1.35-3.88-1.35-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.8 1.18 1.83 1.18 3.09 0 4.43-2.7 5.41-5.27 5.69.42.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .3.21.66.79.55A11.5 11.5 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z"/></svg>
+    </a>
+    <a href="https://www.linkedin.com/in/mahi-shukla-921551272/" target="_blank" class="icon-btn" aria-label="LinkedIn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>
+    </a>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="eyebrow">🛵 Real-time Restaurant Intelligence · Bangalore</div>
+  <h1>Zomato Bangalore —<br>Business Intelligence Dashboard</h1>
+  <p>Real-time insights into restaurant performance, customer behavior, cuisine trends, and delivery analytics across 7,105 restaurants and 30 areas of Bangalore.</p>
+  <div class="route-line"><div class="dash"></div><span class="scooter">🛵</span></div>
+</header>
+
+<!-- ============ PAGE 1: EXECUTIVE OVERVIEW ============ -->
+<section class="section" id="overview">
+  <div class="section-header">
+    <div>
+      <div class="tag"><div class="bar"></div><span>Executive Overview</span></div>
+      <h2>The full picture, at a glance</h2>
+      <p>Real-time insights into restaurant performance, customer behavior, cuisine trends, and delivery analytics.</p>
+    </div>
+    <div class="filters">
+      <select class="filter-select" id="filterOverviewArea" data-target="chartTop5Areas">
+        <option value="All">Area: All</option>
+        <option value="Byresandra, Tavarekere, Madiwala">Byresandra, Tavarekere, Madiwala</option>
+        <option value="Bannerghatta Road">Bannerghatta Road</option>
+        <option value="Brookefield">Brookefield</option>
+        <option value="Brigade Road">Brigade Road</option>
+        <option value="Indiranagar">Indiranagar</option>
+      </select>
+      <select class="filter-select" id="filterOverviewCuisine">
+        <option value="All">Cuisines: All</option>
+        <option value="North Indian">North Indian</option>
+        <option value="South Indian">South Indian</option>
+        <option value="Chinese">Chinese</option>
+        <option value="Cafe">Cafe</option>
+        <option value="Biryani">Biryani</option>
+        <option value="Continental">Continental</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card fade-item"><div class="kpi-value">7,105</div><div class="kpi-label">Total Restaurants</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value blue">3.51</div><div class="kpi-label">Avg Rating</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value yellow">₹539.2</div><div class="kpi-label">Avg Cost</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value">30</div><div class="kpi-label">Count of Area</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value blue">10.47%</div><div class="kpi-label">Table Booking %</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value">2,175</div><div class="kpi-label">Total Cuisines</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card fade-item">
+      <div class="chart-title">Market Segments</div>
+      <div class="chart-sub">KMeans clustering — 3 tiers found</div>
+      <div class="chart-canvas-wrap" style="height:270px;"><canvas id="chartSegments"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Top 5 Areas by Restaurant Count</div>
+      <div class="chart-sub">Byresandra–Tavarekere–Madiwala leads on volume</div>
+      <div class="chart-canvas-wrap" style="height:240px;"><canvas id="chartTop5Areas"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Restaurant Rating Distribution</div>
+      <div class="chart-sub">Count of restaurants across the rating scale</div>
+      <div class="chart-canvas-wrap" style="height:270px;"><canvas id="chartRatingDist"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Service Adoption</div>
+      <div class="chart-sub">Online order vs table booking availability</div>
+      <div class="chart-canvas-wrap" style="height:270px;"><canvas id="chartServiceAdoption"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-wrap"><div class="divider"><span class="rider">🛵</span></div></div>
+
+<!-- ============ PAGE 2: LOCATION ANALYSIS ============ -->
+<section class="section" id="location">
+  <div class="section-header">
+    <div>
+      <div class="tag"><div class="bar"></div><span>Location Intelligence</span></div>
+      <h2>Bangalore Area Performance Analysis</h2>
+      <p>Area-wise restaurant ratings, pricing trends, delivery adoption, and market opportunity analysis.</p>
+    </div>
+    <div class="filters">
+      <select class="filter-select" id="filterLocationArea" data-target="chartTop12Areas,chartOnlineOrderArea">
+        <option value="All">Area: All</option>
+        <option value="Brigade Road">Brigade Road</option>
+        <option value="Lavelle Road">Lavelle Road</option>
+        <option value="Malleshwaram">Malleshwaram</option>
+        <option value="Church Street">Church Street</option>
+        <option value="Indiranagar">Indiranagar</option>
+        <option value="Banashankari">Banashankari</option>
+        <option value="Mg Road">Mg Road</option>
+        <option value="Frazer Town">Frazer Town</option>
+      </select>
+      <select class="filter-select" id="filterLocationCost" data-target="chartCostByArea">
+        <option value="All">Cost Range: All</option>
+        <option value="0-200">₹0 - 200</option>
+        <option value="200-400">₹200 - 400</option>
+        <option value="400-600">₹400 - 600</option>
+        <option value="600-800">₹600 - 800</option>
+        <option value="800-1000">₹800 - 1000</option>
+        <option value="1000-1500">₹1000 - 1500</option>
+        <option value="1500+">₹1500+</option>
+      </select>
+      <select class="filter-select" id="filterLocationType">
+        <option value="All">Restaurant Type: All</option>
+        <option value="Casual Dining">Casual Dining</option>
+        <option value="Quick Bites">Quick Bites</option>
+        <option value="Cafe">Cafe</option>
+        <option value="Fine Dining">Fine Dining</option>
+        <option value="Delivery Only">Delivery Only</option>
+      </select>
+      <select class="filter-select" id="filterLocationCuisine">
+        <option value="All">Cuisines: All</option>
+        <option value="North Indian">North Indian</option>
+        <option value="South Indian">South Indian</option>
+        <option value="Chinese">Chinese</option>
+        <option value="Continental">Continental</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card fade-item"><div class="kpi-value blue">3.68</div><div class="kpi-label">Best Area Rating</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value">798</div><div class="kpi-label">Largest Area</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value yellow">₹861</div><div class="kpi-label">Most Expensive Area</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value">24.68%</div><div class="kpi-label">Lowest Online Order %</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card fade-item span2">
+      <div class="chart-title">Top 12 Areas by Average Rating</div>
+      <div class="chart-sub">Brigade Road leads on quality</div>
+      <div class="chart-canvas-wrap" style="height:360px;"><canvas id="chartTop12Areas"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Online Order Adoption by Area</div>
+      <div class="chart-sub">Share of restaurants offering online ordering</div>
+      <div class="chart-canvas-wrap" style="height:270px;"><canvas id="chartOnlineOrderArea"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Avg Cost by Area</div>
+      <div class="chart-sub">Top 8 most expensive areas</div>
+      <div class="chart-canvas-wrap" style="height:300px;"><canvas id="chartCostByArea"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-wrap"><div class="divider"><span class="rider" style="animation-delay:2.6s;">🛵</span></div></div>
+
+<!-- ============ PAGE 3: CUISINE ANALYSIS ============ -->
+<section class="section" id="cuisine">
+  <div class="section-header">
+    <div>
+      <div class="tag"><div class="bar"></div><span>Cuisine Analysis</span></div>
+      <h2>What Does Bangalore Eat?</h2>
+      <p>Popularity, ratings and pricing analysis of cuisines across Bangalore restaurants.</p>
+    </div>
+    <div class="filters">
+      <select class="filter-select" id="filterCuisineCost" data-target="chartCostByCuisine">
+        <option value="All">Cost Range: All</option>
+        <option value="0-500">₹0 - 500</option>
+        <option value="500-1000">₹500 - 1000</option>
+        <option value="1000-2000">₹1000 - 2000</option>
+        <option value="2000+">₹2000+</option>
+      </select>
+      <select class="filter-select" id="filterCuisineType">
+        <option value="All">Restaurant Type: All</option>
+        <option value="Casual Dining">Casual Dining</option>
+        <option value="Quick Bites">Quick Bites</option>
+        <option value="Cafe">Cafe</option>
+        <option value="Fine Dining">Fine Dining</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card fade-item"><div class="kpi-value">1,943</div><div class="kpi-label">North Indian Restaurants (27%)</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value blue">4.50</div><div class="kpi-label">Highest Rated Cuisine</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value yellow">₹188</div><div class="kpi-label">Cheapest Cuisine</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value yellow">₹2,483</div><div class="kpi-label">Most Expensive Cuisine</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card fade-item span2">
+      <div class="chart-title">Top 12 Cuisines by Restaurant Count</div>
+      <div class="chart-sub">North Indian dominates the Bangalore market</div>
+      <div class="chart-canvas-wrap" style="height:300px;"><canvas id="chartTopCuisines"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Avg Cost by Cuisine</div>
+      <div class="chart-sub">Top 5 most expensive cuisines</div>
+      <div class="chart-canvas-wrap" style="height:240px;"><canvas id="chartCostByCuisine"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Avg Rating by Top 10 Cuisines</div>
+      <div class="chart-sub">Niche global cuisines rate highest</div>
+      <div class="chart-canvas-wrap" style="height:320px;"><canvas id="chartRatingByCuisine"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-wrap"><div class="divider"><span class="rider" style="animation-delay:5.2s;">🛵</span></div></div>
+
+<!-- ============ PAGE 4: PRICE & RATING ============ -->
+<section class="section" id="price">
+  <div class="section-header">
+    <div>
+      <div class="tag"><div class="bar"></div><span>Price &amp; Rating Analysis</span></div>
+      <h2>Does Expensive Mean Better?</h2>
+      <p>Analyzing the relationship between restaurant pricing, customer ratings, and service quality across Bangalore restaurants.</p>
+    </div>
+    <div class="filters">
+      <select class="filter-select" id="filterPriceCost" data-target="chartPriceDist">
+        <option value="All">Cost Range: All</option>
+        <option value="0-200">₹0 - 200</option>
+        <option value="200-400">₹200 - 400</option>
+        <option value="400-600">₹400 - 600</option>
+        <option value="600-800">₹600 - 800</option>
+        <option value="800-1000">₹800 - 1000</option>
+        <option value="1000-1500">₹1000 - 1500</option>
+        <option value="1500+">₹1500+</option>
+      </select>
+      <select class="filter-select" id="filterPriceType">
+        <option value="All">Restaurant Type: All</option>
+        <option value="Casual Dining">Casual Dining</option>
+        <option value="Quick Bites">Quick Bites</option>
+        <option value="Cafe">Cafe</option>
+        <option value="Fine Dining">Fine Dining</option>
+      </select>
+      <select class="filter-select" id="filterPriceArea">
+        <option value="All">Area: All</option>
+        <option value="Brigade Road">Brigade Road</option>
+        <option value="Lavelle Road">Lavelle Road</option>
+        <option value="Indiranagar">Indiranagar</option>
+        <option value="Whitefield">Whitefield</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card fade-item"><div class="kpi-value blue">0.37</div><div class="kpi-label">Price–Rating Corr</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value yellow">₹400</div><div class="kpi-label">Median Cost</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value">4.04</div><div class="kpi-label">Rating With Booking</div></div>
+    <div class="kpi-card fade-item"><div class="kpi-value">3.45</div><div class="kpi-label">Rating Without Booking</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-card fade-item">
+      <div class="chart-title">Price Distribution</div>
+      <div class="chart-sub">All 7,105 restaurants</div>
+      <div class="chart-canvas-wrap" style="height:270px;"><canvas id="chartPriceDist"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Impact of Table Booking on Ratings</div>
+      <div class="chart-sub">t-test p &lt; 0.05 — statistically significant · +0.59 gap</div>
+      <div class="chart-canvas-wrap" style="height:270px;"><canvas id="chartBookingImpact"></canvas></div>
+    </div>
+    <div class="chart-card fade-item span2">
+      <div class="chart-title">Rating Category Breakdown</div>
+      <div class="chart-sub">Distribution across all restaurants</div>
+      <div class="chart-canvas-wrap" style="height:110px;"><canvas id="chartRatingBreakdown"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-wrap"><div class="divider"><span class="rider" style="animation-delay:7.8s;">🛵</span></div></div>
+
+<!-- ============ PAGE 5: MARKET STRATEGY ============ -->
+<section class="section" id="market">
+  <div class="section-header">
+    <div>
+      <div class="tag"><div class="bar"></div><span>Market Segments &amp; Strategy</span></div>
+      <h2>Business Opportunities &amp; Segment Behavior</h2>
+      <p>Business opportunities, customer behavior, and restaurant segment analysis.</p>
+    </div>
+  </div>
+
+  <div class="segment-cards">
+    <div class="segment-card luxury fade-item">
+      <div class="segment-name">Luxury Premium</div>
+      <div class="segment-meta">811 restaurants<br>Rating 4.06 · ₹1,384<br>945 reviews avg</div>
+    </div>
+    <div class="segment-card mid fade-item">
+      <div class="segment-name">Mid-Range</div>
+      <div class="segment-meta">3,343 restaurants<br>Rating 3.50 · ₹423<br>117 reviews avg</div>
+    </div>
+    <div class="segment-card budget fade-item">
+      <div class="segment-name">Budget-Friendly</div>
+      <div class="segment-meta">2,951 restaurants<br>Rating 3.38 · ₹439<br>62 reviews avg</div>
+    </div>
+  </div>
+
+  <div class="chart-grid thirds">
+    <div class="chart-card fade-item">
+      <div class="chart-title">Average Rating by Segment</div>
+      <div class="chart-canvas-wrap" style="height:240px;"><canvas id="chartAvgRatingSeg"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Avg Reviews per Restaurant</div>
+      <div class="chart-canvas-wrap" style="height:240px;"><canvas id="chartAvgReviewsSeg"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Restaurant Count by Segment</div>
+      <div class="chart-canvas-wrap" style="height:240px;"><canvas id="chartCountSeg"></canvas></div>
+    </div>
+    <div class="chart-card fade-item span2">
+      <div class="chart-title">Feature Importance — What Drives Ratings?</div>
+      <div class="chart-canvas-wrap" style="height:220px;"><canvas id="chartFeatureImportance"></canvas></div>
+    </div>
+    <div class="chart-card fade-item">
+      <div class="chart-title">Avg Reviews by Segment</div>
+      <div class="chart-sub">Secondary view</div>
+      <div class="chart-canvas-wrap" style="height:240px;"><canvas id="chartAvgReviewsSeg2"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="nav-logo">MS</div>
+      <div class="footer-brand-text">Mahi Shukla<span>Data Operations &amp; BI Analyst</span></div>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>Dashboard</h4>
+        <a href="#overview">Executive Overview</a>
+        <a href="#location">Location Analysis</a>
+        <a href="#cuisine">Cuisine Analysis</a>
+      </div>
+      <div class="footer-col">
+        <h4>More</h4>
+        <a href="#price">Price &amp; Rating</a>
+        <a href="#market">Market Strategy</a>
+      </div>
+      <div class="footer-col">
+        <h4>Connect</h4>
+        <div class="footer-social">
+          <a href="https://github.com/MahiShukla-ms/profile" target="_blank" class="icon-btn" aria-label="GitHub">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.78-.25.78-.55 0-.27-.01-1.17-.01-2.12-3.2.7-3.88-1.35-3.88-1.35-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.25 3.34.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.7 0-1.26.45-2.29 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .96-.31 3.15 1.18a10.9 10.9 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.59.23 2.76.11 3.05.74.8 1.18 1.83 1.18 3.09 0 4.43-2.7 5.41-5.27 5.69.42.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .3.21.66.79.55A11.5 11.5 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z"/></svg>
+          </a>
+          <a href="https://www.linkedin.com/in/mahi-shukla-921551272/" target="_blank" class="icon-btn" aria-label="LinkedIn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.38-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.07 2.07 0 1 1 0-4.13 2.07 2.07 0 0 1 0 4.13ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 Mahi Shukla. All rights and metrics verified.</span>
+    <span>Built with Chart.js · Data Operations &amp; BI Analyst Portfolio</span>
+  </div>
+</footer>
+
+<script>
+/* Safety net: if the Chart.js CDN failed to load for any reason (slow
+   network, ad-blocker, offline), don't let that break navigation or
+   filter buttons on the rest of the page. */
+if (typeof Chart === 'undefined') {
+  console.error('Zomato dashboard: Chart.js did not load from the CDN — charts will be blank, but navigation/filters still work.');
+}
+
+/* ---------- theme colors ---------- */
+const C = {
+  blue:'#5ec8f8', blueSoft:'#8fd9ff', blueDeep:'#1a3554',
+  yellow:'#f6c343', yellowDeep:'#c99a2b',
+  grid:'rgba(255,255,255,0.06)', text:'#8ba0b8', textLight:'#eaf2fb'
+};
+/* Wrap every chart creation so ONE bad chart/data issue can never
+   stop the rest of the charts (or the filter buttons below) from working. */
+function safeChart(el, config){
+  try{
+    if (typeof Chart === 'undefined') return null;
+    if(!el){ console.warn('Zomato dashboard: canvas element not found for a chart.'); return null; }
+    return new Chart(el, config);
+  }catch(err){
+    console.error('Zomato dashboard: chart failed to render →', el.id, err);
+    return null;
+  }
+}
+
+function blueShades(n){
+  const shades=['#5ec8f8','#8fd9ff','#3aa4dd','#1a3554','#2c5a86','#7dd3fc'];
+  return Array.from({length:n},(_,i)=>shades[i%shades.length]);
+}
+function yellowShades(n){
+  const shades=['#f6c343','#ffd873','#c99a2b','#e0ab35','#a67f24'];
+  return Array.from({length:n},(_,i)=>shades[i%shades.length]);
+}
+
+if (typeof Chart !== 'undefined') {
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = C.text;
+Chart.defaults.font.size = 11.5;
+
+const barBase = {
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{grid:{color:C.grid,display:false},ticks:{color:C.text}},
+    y:{grid:{color:C.grid},ticks:{color:C.text}}
+  }
+};
+
+/* Horizontal bar charts need their scale TYPES set explicitly —
+   otherwise Chart.js can fail to infer that x=value/y=category when
+   a custom scales object is supplied, leaving the chart blank with a
+   default 0–1 axis. */
+const barBaseH = {
+  indexAxis:'y',
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{type:'linear', grid:{color:C.grid}, ticks:{color:C.text}},
+    y:{type:'category', grid:{display:false}, ticks:{color:C.text}}
+  }
+};
+
+/* ===== PAGE 1 ===== */
+safeChart(document.getElementById('chartSegments'), {
+  type:'doughnut',
+  data:{
+    labels:['Luxury Premium (44.24%)','Budget-Friendly (38.11%)','Mid-Range (17.65%)'],
+    datasets:[{data:[44.24,38.11,17.65], backgroundColor:[C.blue,C.blueDeep,C.yellow], borderColor:'#050810', borderWidth:3}]
+  },
+  options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:14,color:C.text}}}, cutout:'62%'}
+});
+
+safeChart(document.getElementById('chartTop5Areas'), {
+  type:'bar',
+  data:{
+    labels:['Byresandra, Tavarekere, Madiwala','Bannerghatta Road','Brookefield','Brigade Road','Indiranagar'],
+    datasets:[{data:[798,552,477,464,455], backgroundColor:blueShades(5), borderRadius:6}]
+  },
+  options:barBaseH
+});
+
+safeChart(document.getElementById('chartRatingDist'), {
+  type:'bar',
+  data:{
+    labels:['3.0','3.2','3.4','3.6','3.8','4.0','4.2','4.4','4.6'],
+    datasets:[{data:[520,900,1080,1200,1050,650,400,150,50], backgroundColor:C.blue, borderRadius:5}]
+  },
+  options:barBase
+});
+
+safeChart(document.getElementById('chartServiceAdoption'), {
+  type:'bar',
+  data:{
+    labels:['Online Order','Table Booking'],
+    datasets:[
+      {label:'Available', data:[52.46,10.47], backgroundColor:C.blue, borderRadius:5, stack:'s'},
+      {label:'Not Available', data:[47.54,89.53], backgroundColor:C.blueDeep, borderRadius:5, stack:'s'}
+    ]
+  },
+  options:{...barBase, plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,color:C.text}}}, scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,grid:{color:C.grid},max:100}}}
+});
+
+/* ===== PAGE 2 ===== */
+safeChart(document.getElementById('chartTop12Areas'), {
+  type:'bar',
+  data:{
+    labels:['Brigade Road','Lavelle Road','Malleshwaram','Church Street','Indiranagar','Byresandra, Tavarek...','Banashankari','Mg Road','Koramangala 7th B...','Koramangala 5th B...','Koramangala 6th B...','Frazer Town'],
+    datasets:[{data:[3.72,3.70,3.68,3.66,3.64,3.61,3.59,3.57,3.55,3.53,3.51,3.49], backgroundColor:C.yellow, borderRadius:5}]
+  },
+  options:barBaseH
+});
+
+safeChart(document.getElementById('chartOnlineOrderArea'), {
+  type:'bar',
+  data:{
+    labels:['Koramangal...','Bellandur','Brookefield','Bannerghatt...','Banashankari','Byresandra,...','Mg Road','Malleshwaram'],
+    datasets:[{data:[0.71,0.69,0.67,0.66,0.63,0.61,0.59,0.58], backgroundColor:C.blue, borderRadius:5}]
+  },
+  options:barBase
+});
+
+safeChart(document.getElementById('chartCostByArea'), {
+  type:'bar',
+  data:{
+    labels:['Lavelle Road','Brigade Road','Church Street','Whitefield','Indiranagar','Old Airport Road','Malleshwaram','Mg Road'],
+    datasets:[{data:[950,900,850,750,700,650,600,550], backgroundColor:yellowShades(8), borderRadius:5}]
+  },
+  options:barBaseH
+});
+
+/* ===== PAGE 3 ===== */
+safeChart(document.getElementById('chartTopCuisines'), {
+  type:'bar',
+  data:{
+    labels:['North Indian','South Indian','Chinese','Cafe','Biryani','Fast Food','Continental','Bakery','Desserts','Andhra','Beverages','Kerala'],
+    datasets:[{data:[1943,850,480,478,430,420,280,260,230,210,150,130], backgroundColor:C.blueSoft, borderRadius:5}]
+  },
+  options:barBase
+});
+
+safeChart(document.getElementById('chartCostByCuisine'), {
+  type:'bar',
+  data:{
+    labels:['French','Spanish','Sushi','Japanese','Steak'],
+    datasets:[{data:[2483.3,2233.3,2000.0,1962.5,1900.0], backgroundColor:yellowShades(5), borderRadius:5}]
+  },
+  options:barBaseH
+});
+
+safeChart(document.getElementById('chartRatingByCuisine'), {
+  type:'bar',
+  data:{
+    labels:['African','Malaysian','Middle Eastern','Parsi','Sushi','German','Singaporean','French','Vietnamese','Modern Indian'],
+    datasets:[{data:[4.6,4.55,4.5,4.48,4.45,4.4,4.35,4.3,4.25,4.2], backgroundColor:C.blue, borderRadius:5}]
+  },
+  options:barBaseH
+});
+
+/* ===== PAGE 4 ===== */
+safeChart(document.getElementById('chartPriceDist'), {
+  type:'bar',
+  data:{
+    labels:['200-400','400-600','0-200','600-800','1000-1500','800-1000','1500+'],
+    datasets:[{data:[2200,1500,1250,750,550,400,350], backgroundColor:C.blue, borderRadius:5}]
+  },
+  options:barBase
+});
+
+safeChart(document.getElementById('chartBookingImpact'), {
+  type:'bar',
+  data:{
+    labels:['Has Table Booking','No Table Booking'],
+    datasets:[{data:[4.04,3.45], backgroundColor:[C.blue,C.yellow], borderRadius:8}]
+  },
+  options:{...barBase, scales:{x:{grid:{display:false}},y:{grid:{color:C.grid},max:5}}}
+});
+
+safeChart(document.getElementById('chartRatingBreakdown'), {
+  type:'bar',
+  data:{
+    labels:['All Restaurants'],
+    datasets:[
+      {label:'Average', data:[22], backgroundColor:C.blueSoft, stack:'s'},
+      {label:'Below Average', data:[18], backgroundColor:C.blueDeep, stack:'s'},
+      {label:'Excellent', data:[3], backgroundColor:C.yellow, stack:'s'},
+      {label:'Good', data:[35], backgroundColor:'#6d4ea8', stack:'s'},
+      {label:'Very Good', data:[22], backgroundColor:'#e07bb0', stack:'s'}
+    ]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:10,color:C.text}}},
+    scales:{
+      x:{type:'linear', stacked:true, max:100, grid:{color:C.grid}, ticks:{color:C.text}},
+      y:{type:'category', stacked:true, grid:{display:false}, ticks:{color:C.text}}
+    }
+  }
+});
+
+/* ===== PAGE 5 ===== */
+safeChart(document.getElementById('chartAvgRatingSeg'), {
+  type:'bar',
+  data:{labels:['Luxury Premium','Mid-Range','Budget-Friendly'], datasets:[{data:[4.06,3.50,3.38], backgroundColor:[C.blue,C.yellow,'#4a5568'], borderRadius:6}]},
+  options:{...barBase, scales:{...barBase.scales, y:{...barBase.scales.y, min:3}}}
+});
+
+safeChart(document.getElementById('chartAvgReviewsSeg'), {
+  type:'bar',
+  data:{labels:['Luxury Premium','Mid-Range','Budget-Friendly'], datasets:[{data:[800,150,70], backgroundColor:[C.blue,C.yellow,'#4a5568'], borderRadius:6}]},
+  options:barBase
+});
+
+safeChart(document.getElementById('chartCountSeg'), {
+  type:'bar',
+  data:{labels:['Luxury Premium','Budget-Friendly','Mid-Range'], datasets:[{data:[3140,2710,1250], backgroundColor:[C.blue,C.yellow,'#4a5568'], borderRadius:6}]},
+  options:barBase
+});
+
+safeChart(document.getElementById('chartFeatureImportance'), {
+  type:'bar',
+  data:{
+    labels:['num_ratings','avg_cost','has_online_order','has_table_booking'],
+    datasets:[{data:[82,14,2,2], backgroundColor:[C.blue,C.yellow,C.blueDeep,'#4a5568'], borderRadius:5}]
+  },
+  options:barBaseH
+});
+
+safeChart(document.getElementById('chartAvgReviewsSeg2'), {
+  type:'bar',
+  data:{labels:['Luxury Premium','Mid-Range','Budget-Friendly'], datasets:[{data:[200,80,40], backgroundColor:[C.blue,C.yellow,'#4a5568'], borderRadius:6}]},
+  options:barBase
+});
+} /* end: if (typeof Chart !== 'undefined') */
+
+/* ---------- scroll progress ---------- */
+try{
+  const progressBar = document.getElementById('progressBar');
+  window.addEventListener('scroll', () => {
+    const h = document.documentElement;
+    const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    progressBar.style.width = scrolled + '%';
+  });
+}catch(err){ console.error('Zomato dashboard: progress bar failed →', err); }
+
+/* ---------- functional filter dropdowns ---------- */
+try{
+const HL = C.yellow;
+const DIM = 'rgba(94,200,248,0.14)';
+const fillArr = (color,n) => Array.from({length:n}, () => color);
+
+function highlightByLabel(chartId, labels, selected, baseColorArr){
+  const chart = Chart.getChart(chartId);
+  if(!chart) return;
+  chart.data.datasets[0].backgroundColor = (selected === 'All')
+    ? baseColorArr
+    : labels.map(l => (l === selected || l.startsWith(selected)) ? HL : DIM);
+  chart.update();
+}
+function highlightByRange(chartId, values, selected, baseColorArr){
+  const chart = Chart.getChart(chartId);
+  if(!chart) return;
+  if(selected === 'All'){ chart.data.datasets[0].backgroundColor = baseColorArr; chart.update(); return; }
+  let min, max;
+  if(selected.endsWith('+')){ min = parseFloat(selected); max = Infinity; }
+  else { const p = selected.split('-'); min = parseFloat(p[0]); max = parseFloat(p[1]); }
+  chart.data.datasets[0].backgroundColor = values.map(v => (v >= min && v < max) ? HL : DIM);
+  chart.update();
+}
+
+/* every select gets an active-state highlight, regardless of chart linkage */
+document.querySelectorAll('.filter-select').forEach(sel=>{
+  sel.addEventListener('change', ()=> sel.classList.toggle('active', sel.value !== 'All'));
+});
+
+/* Overview — Area -> Top 5 Areas chart */
+document.getElementById('filterOverviewArea')?.addEventListener('change', e=>{
+  highlightByLabel('chartTop5Areas',
+    ['Byresandra, Tavarekere, Madiwala','Bannerghatta Road','Brookefield','Brigade Road','Indiranagar'],
+    e.target.value, blueShades(5));
+});
+
+/* Location — Area -> Top 12 Areas + Online Order by Area */
+document.getElementById('filterLocationArea')?.addEventListener('change', e=>{
+  highlightByLabel('chartTop12Areas',
+    ['Brigade Road','Lavelle Road','Malleshwaram','Church Street','Indiranagar','Byresandra, Tavarek...','Banashankari','Mg Road','Koramangala 7th B...','Koramangala 5th B...','Koramangala 6th B...','Frazer Town'],
+    e.target.value, fillArr(C.yellow,12));
+  highlightByLabel('chartOnlineOrderArea',
+    ['Koramangal...','Bellandur','Brookefield','Bannerghatt...','Banashankari','Byresandra,...','Mg Road','Malleshwaram'],
+    e.target.value, fillArr(C.blue,8));
+});
+
+/* Location — Cost Range -> Avg Cost by Area */
+document.getElementById('filterLocationCost')?.addEventListener('change', e=>{
+  highlightByRange('chartCostByArea', [950,900,850,750,700,650,600,550], e.target.value, yellowShades(8));
+});
+
+/* Cuisine — Cost Range -> Avg Cost by Cuisine */
+document.getElementById('filterCuisineCost')?.addEventListener('change', e=>{
+  highlightByRange('chartCostByCuisine', [2483.3,2233.3,2000.0,1962.5,1900.0], e.target.value, yellowShades(5));
+});
+
+/* Price — Cost Range -> Price Distribution (labels ARE the ranges) */
+document.getElementById('filterPriceCost')?.addEventListener('change', e=>{
+  highlightByLabel('chartPriceDist',
+    ['200-400','400-600','0-200','600-800','1000-1500','800-1000','1500+'],
+    e.target.value, fillArr(C.blue,7));
+});
+}catch(err){ console.error('Zomato dashboard: filter dropdowns failed →', err); }
+
+/* ---------- nav active link + smooth section reveal ---------- */
+try{
+  const sections = document.querySelectorAll('.section');
+  const navA = document.querySelectorAll('.nav-links a');
+  const observer = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        const id = entry.target.getAttribute('id');
+        navA.forEach(a=>a.classList.toggle('active', a.getAttribute('href') === '#'+id));
+        entry.target.querySelectorAll('.fade-item').forEach((el,i)=>{
+          setTimeout(()=>el.classList.add('show'), i*70);
+        });
+      }
+    });
+  }, {threshold:0.15});
+  sections.forEach(s=>observer.observe(s));
+}catch(err){ console.error('Zomato dashboard: nav/scroll reveal failed →', err); }
+</script>
+</body>
+</html>

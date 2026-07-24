@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: 'Courier New', Courier, monospace;
+}
+
+@layer utilities {
+  /* Artistic Flair Theme Background blur circles */
+  .bg-blur-red {
+    position: absolute;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.25) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .bg-blur-purple {
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    background: radial-gradient(circle, rgba(168, 85, 247, 0.22) 0%, transparent 70%);
+    filter: blur(100px);
+    pointer-events: none;
+  }
+  .bg-blur-yellow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(234, 179, 8, 0.15) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+  }
+
+  /* Status Glowing Dot */
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 10px #ef4444;
+  }
+
+  /* Courier New Monospace text format */
+  .mono {
+    font-family: 'Courier New', Courier, monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Dynamic custom glow frames and background blurry backdrops */
+  .neon-glow-red {
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.15), inset 0 0 15px rgba(239, 68, 68, 0.05);
+  }
+  .neon-glow-purple {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.15), inset 0 0 15px rgba(168, 85, 247, 0.05);
+  }
+  .neon-glow-yellow {
+    box-shadow: 0 0 15px rgba(234, 179, 8, 0.15), inset 0 0 15px rgba(234, 179, 8, 0.05);
+  }
+  
+  /* Glass container look */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  .glass-card-border-red {
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+  
+  .glass-card-border-purple {
+    border-color: rgba(168, 85, 247, 0.25);
+  }
+  
+  .glass-card-border-yellow {
+    border-color: rgba(234, 179, 8, 0.25);
+  }
+}
+
+/* Hide scrollbar for clean dashboard viewports while maintaining functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Base scrollbar styling for readable panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(239, 68, 68, 0.5);
+}
+
+/* Animation keyframes */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+@keyframes drive {
+  0% {
+    transform: translateX(-10px) translateY(0px);
+  }
+  50% {
+    transform: translateX(10px) translateY(-2px);
+  }
+  100% {
+    transform: translateX(-10px) translateY(0px);
+  }
+}
+
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(1.15); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-drive {
+  animation: drive 3.5s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 25s linear infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}

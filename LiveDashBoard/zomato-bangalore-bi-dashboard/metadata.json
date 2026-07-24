@@ -1,0 +1,6 @@
+{
+  "name": "Zomato Bangalore BI Dashboard",
+  "description": "An interactive, multi-view Business Intelligence dashboard analyzing restaurant performances, cuisine types, locations, and pricing trends in Bangalore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
