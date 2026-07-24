@@ -80,13 +80,25 @@ This Business Intelligence dashboard has been deployed as an interactive web app
 ```
 📦 Zomato-Bangalore-Restaurants-Analysis
 │
+├── 📈 Dashboard
+│   │
+│   ├── 📸 screenshot
+│   │   ├── page1.png
+│   │   ├── page2.png
+│   │   ├── page3.png
+│   │   ├── page4.png
+│   │   └── page5.png
+│   │
+│   ├── 📊 zomato.pbix
+│   └── 📄 zomato.pdf
+|
 ├── 📊 Livedashboard
 │   ├── index.html
 │   ├── style.css
 │   ├── script.js
 │   └── assets/
 │
-├── 📓 Notebooks
+├── 📓 Notebook
 │   ├── 01_data_understanding.ipynb   ← Shape, dtypes, missing values, basic stats
 │   ├── 02_data_cleaning.ipynb        ← Encoding fix, rename, missing values, duplicates
 │   ├── 03_feature_engineering.ipynb  ← Rating categories, cost tiers, cuisine features
@@ -106,18 +118,6 @@ This Business Intelligence dashboard has been deployed as an interactive web app
 │   ├── restaurant_segments.csv
 │   ├── segment_performance.csv
 │   └── feature_importances.csv
-│
-├── 📈 Dashboard
-│   │
-│   ├── 📸 screenshot
-│   │   ├── page1.png
-│   │   ├── page2.png
-│   │   ├── page3.png
-│   │   ├── page4.png
-│   │   └── page5.png
-│   │
-│   ├── 📊 zomato.pbix
-│   └── 📄 zomato.pdf
 │
 ├── 📜 README.md
 
@@ -172,27 +172,27 @@ This Business Intelligence dashboard has been deployed as an interactive web app
 ### Page 1 — Executive Overview
 KPI cards · Market segment donut · Rating histogram · Service adoption · Top 5 areas
 
-![Executive Overview](zomatoPowerBiDashbord/screenshot/page1.png)
+![Executive Overview](DashBoard/screenshot/page1.png)
 
 ### Page 2 — Location Analysis  
 Top 12 areas by rating (colour-coded) · Online adoption by area · Cost comparison · Bubble chart
 
-![Location Analysis](zomatoPowerBiDashbord/screenshot/page2.png)
+![Location Analysis](DashBoard/screenshot/page2.png)
 
 ### Page 3 — Cuisine Analysis
 North Indian vs South Indian insight · Rating by cuisine · Cost by cuisine · 85 unique cuisines
 
-![Cuisine Analysis](zomatoPowerBiDashbord/screenshot/page3.png)
+![Cuisine Analysis](DashBoard/screenshot/page3.png)
 
 ### Page 4 — Price & Rating
 Price distribution · **Table booking star chart** (4.04 vs 3.45, t-test p<0.05) · Rating category breakdown
 
-![Price & Rating](zomatoPowerBiDashbord/screenshot/page4.png)
+![Price & Rating](DashBoard/screenshot/page4.png)
 
 ### Page 5 — Market Strategy
 3-segment KPI cards · Segment rating comparison · Reviews per segment · Feature importance
 
-![Market Strategy](zomatoPowerBiDashbord/screenshot/page5.png)
+![Market Strategy](DashBoard/screenshot/page5.png)
 
 
 
