@@ -6,7 +6,7 @@
 **Real-time insights into restaurant performance, Customer Behavior, Location Analysis, Cuisines Analysis,  Business & Market Strategy**
 
 [![LinkedIn](https://img.shields.io/badge/Connect%20on%20LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mahi-shukla-921551272/)
-[![Live Dashboard](https://img.shields.io/badge/View%20Live%20Dashboard-F2C811?style=for-the-badge&logo=powerbi&logoColor=black)](http://127.0.0.1:5500/Livedashbord/zomato_live_dashboard.html)
+[![Live Dashboard](https://img.shields.io/badge/View%20Live%20Dashboard-F2C811?style=for-the-badge&logo=powerbi&logoColor=black)](http://127.0.0.1:5500/LiveDashBoard/Live_Dashboard.html)
 [![Email](https://img.shields.io/badge/Contact-mahishukla580%40gmail.com-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](mailto:mahishukla580@gmail.com)
 
 </div>
